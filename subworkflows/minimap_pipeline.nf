@@ -1,6 +1,7 @@
 
 include { configure_igv } from '../lib/common'
 include { filter_references } from '../modules/local/igv_related'
+include { runNanoCLUST } from '../modules/local/nanoclust'
 include {
     createAbundanceTables;
     publish;
