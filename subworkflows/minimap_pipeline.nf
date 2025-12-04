@@ -350,6 +350,9 @@ workflow minimap_pipeline {
             )
             mm2_fasta = convertExtractedFastqToFasta(mm2_filt.extracted)
         }
+        if (params.run_nanoclust && params.minimap2filter) {
+           nanoclust_results = runNanoCLUST(mm2_filt.extracted)
+        }
 
     emit:
         abundance_table = abundance_tables.abundance_tsv
