@@ -1,7 +1,7 @@
 
 include { configure_igv } from '../lib/common'
 include { filter_references } from '../modules/local/igv_related'
-include { runNanoCLUST } from '../modules/local/nanoCLUST'
+// include { runNanoCLUST } from '../modules/local/nanoCLUST'
 include {
     createAbundanceTables;
     publish;
@@ -175,32 +175,32 @@ process extractMinimap2Reads {
     """
 }
 
-process convertExtractedFastqToFasta {
-    label "wfmetagenomics"
-    tag "${meta.alias}"
-    cpus 1
-    memory "2 GB"
-    // write FASTA files back into the same extracted/ folder
-    publishDir "${params.out_dir}/extracted", mode: 'copy', pattern: "*.minimap2.extracted.fasta"
+// process convertExtractedFastqToFasta {
+//     label "wfmetagenomics"
+//     tag "${meta.alias}"
+//     cpus 1
+//     memory "2 GB"
+//     // write FASTA files back into the same extracted/ folder
+//     publishDir "${params.out_dir}/extracted", mode: 'copy', pattern: "*.minimap2.extracted.fasta"
 
-    input:
-        tuple val(meta),
-              path(extracted_fastq)
+//     input:
+//         tuple val(meta),
+//               path(extracted_fastq)
 
-    output:
-        tuple val(meta),
-              path("${meta.alias}.minimap2.extracted.fasta"),
-              emit: extracted_fasta
+//     output:
+//         tuple val(meta),
+//               path("${meta.alias}.minimap2.extracted.fasta"),
+//               emit: extracted_fasta
 
-    script:
-    """
-    in="${extracted_fastq}"
-    out="${meta.alias}.minimap2.extracted.fasta"
+//     script:
+//     """
+//     in="${extracted_fastq}"
+//     out="${meta.alias}.minimap2.extracted.fasta"
 
-    # Convert FASTQ to FASTA
-    sed -n '1~4s/^@/>/p;2~4p' "\$in" > "\$out"
-    """
-}
+//     # Convert FASTQ to FASTA
+//     sed -n '1~4s/^@/>/p;2~4p' "\$in" > "\$out"
+//     """
+// }
 
 /* Process to compute the sequencing depth of each reference and their coverages.
 Run python script to parse the data and output the alignment table
@@ -348,11 +348,10 @@ workflow minimap_pipeline {
                 ref2taxid,
                 taxonomy
             )
-            mm2_fasta = convertExtractedFastqToFasta(mm2_filt.extracted)
         }
-        if (params.run_nanoclust && params.minimap2filter) {
-           nanoclust_results = runNanoCLUST(mm2_filt.extracted)
-        }
+        // if (params.run_nanoclust && params.minimap2filter) {
+        //    nanoclust_results = runNanoCLUST(mm2_filt.extracted)
+        // }
 
     emit:
         abundance_table = abundance_tables.abundance_tsv
