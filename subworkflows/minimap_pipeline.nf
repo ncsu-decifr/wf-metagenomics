@@ -230,14 +230,30 @@ process getAlignmentStats {
     # add taxonomy info
     if [ `zcat "${sample_name}.depth.tsv.gz" | head -n 1 | wc -c ` -ne 0 ]
     then
-        cut -f1 "${sample_name}.reference_coverage.tsv" | sed '1d'| grep -w -f - $ref2taxid \
-        |  sort --parallel=${task.cpus - 1} | cut -f2 \
-        | taxonkit reformat --data-dir $taxonomy -f "{k}\t{K}\t{p}\t{c}\t{o}\t{f}\t{g}\t{s}" -F -I 1 \
-        | sed '1 i\\taxid\tsuperkingdom\tkingdom\tphylum\tclass\torder\tfamily\tgenus\tspecies' \
-        |paste "${sample_name}.reference_coverage.tsv" - \
-        | bgzip -c > "${sample_name}.reference.tsv.gz"
-        # compress tsv
-        bgzip "${sample_name}.reference_coverage.tsv"
+        cut -f1 "${sample_name}.reference_coverage.tsv" | sed '1d' > covered_refs.txt
+
+        grep -w -f covered_refs.txt $ref2taxid > matched_ref2taxid.tsv || true
+
+        if [ -s matched_ref2taxid.tsv ]; then
+            cut -f2 matched_ref2taxid.tsv \
+            | sort --parallel=${task.cpus - 1} \
+            | taxonkit reformat --data-dir $taxonomy -f "{k}\t{K}\t{p}\t{c}\t{o}\t{f}\t{g}\t{s}" -F -I 1 \
+            | sed '1 i\\taxid\tsuperkingdom\tkingdom\tphylum\tclass\torder\tfamily\tgenus\tspecies' \
+            | paste "${sample_name}.reference_coverage.tsv" - \
+            | bgzip -c > "${sample_name}.reference.tsv.gz"
+
+            # compress tsv
+            bgzip "${sample_name}.reference_coverage.tsv"
+
+            workflow-glue alignment_stats \
+                --output "${meta.alias}-alignment-stats.tsv" \
+                --output_heatmap "${meta.alias}-alignment-stats-heatmap.tsv" \
+                --coverage "${sample_name}.reference.tsv.gz" \
+                --depth "${sample_name}.depth.tsv.gz" \
+                --sample "${sample_name}"
+        else
+            echo "No reference IDs matched ref2taxid for ${sample_name}. Skipping alignment_stats."
+        fi
 
         # Run python script to process a useful table
         workflow-glue alignment_stats \
